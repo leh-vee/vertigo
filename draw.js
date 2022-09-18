@@ -10,6 +10,12 @@ const mercProjection = d3.geoMercator();
 let blocksGeoJson;
 const blockDrawnIds = [];
 
+const geoGenerator = d3.geoPath()
+  .projection(mercProjection)
+  .context(ctx);
+
+const SHUL_COORDS = [ -79.475580356435302, 43.666354317159403 ];
+
 function fitProjectionToFeatures(features) {
   mercProjection.center(SHUL_COORDS);
   mercProjection.translate([195, 222])
@@ -18,24 +24,8 @@ function fitProjectionToFeatures(features) {
   // debugger;
 }
 
-const geoGenerator = d3.geoPath()
-  .projection(mercProjection)
-  .context(ctx);
-
-const FURTHEST_EAST_COORD = [ -79.458508994609502, 43.651137126556698 ];
-const ALMOST_ZEROS_COORD = [-79.4842815398717,43.669113317];
-const SHUL_COORDS = [ -79.475580356435302, 43.666354317159403 ];
-
 function markEmanation(feature) {
   const coordinates = mercProjection(feature.geometry.coordinates);
-
-  ctx.beginPath();
-  ctx.arc(coordinates[0], coordinates[1], 5, 0, Math.PI * 2);
-  ctx.fill();
-} 
-
-function markCentre() {
-  const coordinates = mercProjection(ALMOST_ZEROS_COORD);
 
   ctx.beginPath();
   ctx.arc(coordinates[0], coordinates[1], 5, 0, Math.PI * 2);

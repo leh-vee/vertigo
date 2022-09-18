@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "id": 1, "name": "Congregation Knesseth Israel", "nearestNodeId": 13464314 }, "geometry": { "type": "Point", "coordinates": [ -79.475580356435302, 43.666354317159403 ] } },
+{ "type": "Feature", "properties": { "id": 4, "name": "Axis Bar and Grill", "nearestNodeId": 13464441 }, "geometry": { "type": "Point", "coordinates": [ -79.471071893249103, 43.665489955948203 ] } }
+]
+}
