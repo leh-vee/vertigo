@@ -1,4 +1,4 @@
-const mapWidth = 1000, mapHeight = 600;
+const mapWidth = 390, mapHeight = 844;
 const canvas = d3.select(".canvasWrapper").append("canvas")
     .attr("width", mapWidth)
     .attr("height", mapHeight);
@@ -10,8 +10,8 @@ const mercProjection = d3.geoMercator();
 const geoGenerator = d3.geoPath()
   .projection(mercProjection)
   .context(ctx);
-mercProjection.translate([mapWidth / 2, mapHeight / 4])
-mercProjection.scale(6000000);
+mercProjection.translate([mapWidth / 2, mapHeight / 10])
+mercProjection.scale(4000000);
 
 let emanationFeature;
 (async () => {
@@ -24,7 +24,7 @@ let emanationFeature;
 let blocksGeoJson;
 const blockDrawnIds = [];
 (async () => {
-  blocksGeoJson = await d3.json("data/geojson-by-verse/4/centreline.geojson");
+  blocksGeoJson = await d3.json("data/junction-and-margins-centreline.geojson");
   drawBlocksFromNode(emanationFeature.properties.nearestNodeId);
 })();
 
