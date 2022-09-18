@@ -19,7 +19,7 @@ const mapWidth = 390, mapHeight = 844;
 
     const ctx = canvas.node().getContext('2d');
     ctx.lineWidth = 1;
-    // ctx.lineCap = 'round';
+    ctx.lineCap = 'round';
 
     const geoGenerator = d3.geoPath()
       .projection(mercProjection)
@@ -28,17 +28,27 @@ const mapWidth = 390, mapHeight = 844;
     mercProjection.scale(3000000);
     mercProjection.center(eyeCoords);
     const eyeCoordsProj = mercProjection(eyeCoords);
-    ctx.beginPath();
-    ctx.arc(eyeCoordsProj[0], eyeCoordsProj[1], rep, 0, Math.PI * 2);
-    ctx.fill();
     ctx.translate(...eyeCoordsProj);
-    ctx.rotate(rep * 100 * Math.PI / 180); 
+    ctx.rotate(rep * 18 * Math.PI / 180); 
     ctx.translate(-eyeCoordsProj[0], -eyeCoordsProj[1])
     const animator = new CentrelineAnimator(ctx, mercProjection);
-    animator.drawBlocksFromNode(13465772);
-    rep += 1;
-    const timeoutSpeed = 30000 - (rep * 300);
-    setTimeout(animateEmanation, timeoutSpeed > 0 ? timeoutSpeed : 100);
+    if (rep === 0) {
+      ctx.beginPath();
+      ctx.arc(eyeCoordsProj[0], eyeCoordsProj[1], rep < 20 ? rep+5 : 20, 0, Math.PI * 2);
+      ctx.fill();
+      animator.drawBlocksFromNode(13465772);
+      rep = 1;
+      setTimeout(animateEmanation, 10000);
+    } else {
+      animator.drawAllBlocks(geoGenerator)
+      rep += 1;
+      const timeoutSpeed = 1000 - (rep * 75);  
+      if (timeoutSpeed > 100) {
+        setTimeout(animateEmanation, timeoutSpeed);
+      } else if (rep <= 20) {
+        setTimeout(animateEmanation, 100);
+      }
+    }
   };
   animateEmanation();
 
