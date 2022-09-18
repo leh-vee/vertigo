@@ -4,8 +4,8 @@ lowly place. Come down. There is no path where you
 project yourself. Come down; from here you can look 
 at the sky. From here you can begin to climb. Draw
 back your song from the middle air where you cannot
-follow it. Close down these shaking towers yo have
-built toward your vertigo. You do not know how to
+follow it. <b>Close down these shaking towers you have
+built toward your vertigo.</b> You do not know how to
 bind your heart to the skylark, or your eyes to the hard-
 ened blue hills. Return to the sorrow in which you have
 hidden your truth. Kneel here, search here, with both
