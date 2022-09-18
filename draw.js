@@ -4,7 +4,9 @@ const canvas = d3.select(".canvasWrapper").append("canvas")
     .attr("height", mapHeight);
 
 const ctx = canvas.node().getContext('2d');
-ctx.lineCap = 'round';
+ctx.lineCap = 'square';
+ctx.lineWidth = 6;
+ctx.strokeStyle = 'white';
 
 const mercProjection = d3.geoMercator();
 const geoGenerator = d3.geoPath()
@@ -18,7 +20,7 @@ let emanationFeature;
   const emanationsGeoJson = await d3.json("data/geojson-by-verse/4/emanations.geojson");
   emanationFeature = emanationsGeoJson.features[0];
   mercProjection.center(emanationFeature.geometry.coordinates);
-  markEmanation(emanationFeature.geometry.coordinates);
+  // markEmanation(emanationFeature.geometry.coordinates);
 })();
 
 let blocksGeoJson;
@@ -52,13 +54,14 @@ function markSyllable(featureCoords) {
   ctx.beginPath();
   ctx.arc(projCoords[0], projCoords[1], 2, 0, Math.PI * 2);
   ctx.fill();
-} 
+}
 
 function markEmanation(featureCoords) {
   const projCoords = mercProjection(featureCoords);
 
+  ctx.fillStyle = 'white';
   ctx.beginPath();
-  ctx.arc(projCoords[0], projCoords[1], 5, 0, Math.PI * 2);
+  ctx.arc(projCoords[0], projCoords[1], 10, 0, Math.PI * 2);
   ctx.fill();
 } 
 
@@ -109,7 +112,7 @@ function animateBlockLine(blockAnimeProps, pointIndex = 0) {
   const yDelta = toPoint[1] - fromPoint[1];
   
   const lineLength = Math.sqrt(xDelta ** 2 + yDelta ** 2);
-  const segmentLength = 0.25;
+  const segmentLength = 1.25;
   const segmentPercentOfLineLength = segmentLength / lineLength;
 
   const xSegmentDelta = xDelta * segmentPercentOfLineLength;
