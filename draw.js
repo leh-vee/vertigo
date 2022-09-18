@@ -1,3 +1,4 @@
+const textEl = document.getElementById('syllable');
 const mapWidth = 390, mapHeight = 844;
 const canvas = d3.select(".canvasWrapper").append("canvas")
     .attr("width", mapWidth)
@@ -7,13 +8,16 @@ const ctx = canvas.node().getContext('2d');
 ctx.lineCap = 'square';
 ctx.lineWidth = 6;
 ctx.strokeStyle = 'white';
+ctx.font = '150px serif';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'alphabetic';
 
 const mercProjection = d3.geoMercator();
 const geoGenerator = d3.geoPath()
   .projection(mercProjection)
   .context(ctx);
 mercProjection.translate([mapWidth / 2, mapHeight / 10])
-mercProjection.scale(4000000);
+mercProjection.scale(2000000);
 
 let emanationFeature;
 (async () => {
@@ -41,6 +45,7 @@ function markSyllables(features) {
   const intervalId = setInterval(() => {
     if (nextSyllableIndex < syllableCount) {
       markSyllable(features[nextSyllableIndex].geometry.coordinates);
+      if (nextSyllableIndex > 2) drawSyllable(features[nextSyllableIndex].properties.name);
       nextSyllableIndex += 1;
     } else {
       clearInterval(intervalId);
@@ -53,7 +58,14 @@ function markSyllable(featureCoords) {
 
   ctx.beginPath();
   ctx.arc(projCoords[0], projCoords[1], 2, 0, Math.PI * 2);
+  ctx.fillStyle = 'black';
   ctx.fill();
+}
+
+function drawSyllable(syllable) {
+  textEl.textContent = syllable;
+  // ctx.fillStyle = 'white';
+  // ctx.fillText(syllable, mapWidth / 2, mapHeight / 2);
 }
 
 function markEmanation(featureCoords) {
