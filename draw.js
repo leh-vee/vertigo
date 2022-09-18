@@ -28,6 +28,32 @@ const blockDrawnIds = [];
   drawBlocksFromNode(emanationFeature.properties.nearestNodeId);
 })();
 
+(async () => {
+  const syllablesGeoJson = await d3.json("data/geojson-by-verse/4/syllables.geojson");
+  markSyllables(syllablesGeoJson.features);
+})();
+
+function markSyllables(features) {
+  const syllableCount = features.length;
+  let nextSyllableIndex = 0;
+  const intervalId = setInterval(() => {
+    if (nextSyllableIndex < syllableCount) {
+      markSyllable(features[nextSyllableIndex].geometry.coordinates);
+      nextSyllableIndex += 1;
+    } else {
+      clearInterval(intervalId);
+    }
+  }, 1000);
+}
+
+function markSyllable(featureCoords) {
+  const projCoords = mercProjection(featureCoords);
+
+  ctx.beginPath();
+  ctx.arc(projCoords[0], projCoords[1], 2, 0, Math.PI * 2);
+  ctx.fill();
+} 
+
 function markEmanation(featureCoords) {
   const projCoords = mercProjection(featureCoords);
 
@@ -37,7 +63,7 @@ function markEmanation(featureCoords) {
 } 
 
 function drawBlocksFromNode(nodeId) {
-  console.log('draw blocks from node', nodeId);
+  // console.log('draw blocks from node', nodeId);
   const blocks = getBlocksAtNode(nodeId);
   blocks.forEach(block => {
     drawBlock(block, nodeId);
@@ -83,7 +109,7 @@ function animateBlockLine(blockAnimeProps, pointIndex = 0) {
   const yDelta = toPoint[1] - fromPoint[1];
   
   const lineLength = Math.sqrt(xDelta ** 2 + yDelta ** 2);
-  const segmentLength = 1.2;
+  const segmentLength = 0.25;
   const segmentPercentOfLineLength = segmentLength / lineLength;
 
   const xSegmentDelta = xDelta * segmentPercentOfLineLength;
