@@ -1,34 +1,38 @@
-const mapWidth = 390, mapHeight = 844;
+const mapWidth = 1000, mapHeight = 600;
 const canvas = d3.select(".canvasWrapper").append("canvas")
     .attr("width", mapWidth)
     .attr("height", mapHeight);
 
 const ctx = canvas.node().getContext('2d');
 ctx.lineCap = 'round';
+
 const mercProjection = d3.geoMercator();
-
-let blocksGeoJson;
-const blockDrawnIds = [];
-
 const geoGenerator = d3.geoPath()
   .projection(mercProjection)
   .context(ctx);
+mercProjection.translate([mapWidth / 2, mapHeight / 4])
+mercProjection.scale(6000000);
 
-const SHUL_COORDS = [ -79.475580356435302, 43.666354317159403 ];
+let emanationFeature;
+(async () => {
+  const emanationsGeoJson = await d3.json("data/geojson-by-verse/4/emanations.geojson");
+  emanationFeature = emanationsGeoJson.features[0];
+  mercProjection.center(emanationFeature.geometry.coordinates);
+  markEmanation(emanationFeature.geometry.coordinates);
+})();
 
-function fitProjectionToFeatures(features) {
-  mercProjection.center(SHUL_COORDS);
-  mercProjection.translate([195, 222])
-  mercProjection.scale(5000000);
-  // mercProjection.fitSize([mapWidth, mapHeight], features); // scale 1267489.0147401579; translate [1758339.8734169512, 1075967.0886071238]
-  // debugger;
-}
+let blocksGeoJson;
+const blockDrawnIds = [];
+(async () => {
+  blocksGeoJson = await d3.json("data/geojson-by-verse/4/centreline.geojson");
+  drawBlocksFromNode(emanationFeature.properties.nearestNodeId);
+})();
 
-function markEmanation(feature) {
-  const coordinates = mercProjection(feature.geometry.coordinates);
+function markEmanation(featureCoords) {
+  const projCoords = mercProjection(featureCoords);
 
   ctx.beginPath();
-  ctx.arc(coordinates[0], coordinates[1], 5, 0, Math.PI * 2);
+  ctx.arc(projCoords[0], projCoords[1], 5, 0, Math.PI * 2);
   ctx.fill();
 } 
 
@@ -127,27 +131,6 @@ function animateBlockLine(blockAnimeProps, pointIndex = 0) {
   }
 
   drawSegment();
-}
-
-d3.json("data/junction-and-margins-centreline.geojson").then((centrelines) => {
-
-  blocksGeoJson = centrelines;
-  fitProjectionToFeatures(blocksGeoJson);
-  
-  d3.json("data/emanation-markers.geojson").then((markers) => {
-    const emanationOne = markers.features[0];
-    const blockNearestEmOne = getBlockById(emanationOne.properties.nearest_line_id);
-    markEmanation(emanationOne);
-    // markCentre();
-    drawBlocksFromNode(blockNearestEmOne.properties.to_node_id);
-  });
-});
-
-function getBlockById(id) {
-  const block = blocksGeoJson.features.find(block => {
-    return block.properties.id === id;
-  });
-  return block;
 }
 
 function getBlocksAtNode(nodeId) {
