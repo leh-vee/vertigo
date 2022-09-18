@@ -1,48 +1,54 @@
 const mapWidth = 390, mapHeight = 844;
-const canvas = d3.select(".canvasWrapper").append("canvas")
-    .attr("width", mapWidth)
-    .attr("height", mapHeight);
-
-const ctx = canvas.node().getContext('2d');
-ctx.lineCap = 'round';
-
-const mercProjection = d3.geoMercator();
-const geoGenerator = d3.geoPath()
-  .projection(mercProjection)
-  .context(ctx);
-mercProjection.translate([mapWidth / 2, mapHeight / 2])
-mercProjection.scale(3000000);
-
-let emanationFeature;
-const eyeCoords = [ -79.466850201826219, 43.657227646269199 ];
-(async () => {
-  const emanationsGeoJson = await d3.json("data/geojson-by-verse/4/emanations.geojson");
-  emanationFeature = emanationsGeoJson.features[0];
-  mercProjection.center(eyeCoords);
-  markEmanation(eyeCoords);
-})();
+// (async () => {
+//   const emanationsGeoJson = await d3.json("data/geojson-by-verse/4/emanations.geojson");
+//   emanationFeature = emanationsGeoJson.features[0];
+//   mercProjection.center(eyeCoords);
+//   markEmanation(eyeCoords);
+// })();
 
 (async () => {
   CentrelineAnimator.blocksGeoJson = await d3.json("data/junction-and-margins-centreline.geojson");
-  const animator = new CentrelineAnimator(ctx, mercProjection);
-  animator.drawBlocksFromNode(13465772);
+  const eyeCoords = [ -79.466850201826219, 43.657227646269199 ];
+  const mercProjection = d3.geoMercator();
+  let rep = 0;
 
-  // drawBlocksFromNode(13465772);
-  // setInterval(() => {
-  //   let newScale = mercProjection.scale() + 3000000;
-  //   mercProjection.scale(newScale);
-  //   drawBlocksFromNode(13465772);
-  // }, 10000);
+  animateEmanation = () => {
+    const canvas = d3.select(".canvasWrapper").append("canvas")
+      .attr("width", mapWidth)
+      .attr("height", mapHeight);
+
+    const ctx = canvas.node().getContext('2d');
+    ctx.lineWidth = 1;
+    // ctx.lineCap = 'round';
+
+    const geoGenerator = d3.geoPath()
+      .projection(mercProjection)
+      .context(ctx);
+    mercProjection.translate([mapWidth / 2, mapHeight / 2])
+    mercProjection.scale(3000000);
+    mercProjection.center(eyeCoords);
+    const eyeCoordsProj = mercProjection(eyeCoords);
+    ctx.beginPath();
+    ctx.arc(eyeCoordsProj[0], eyeCoordsProj[1], rep, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.translate(...eyeCoordsProj);
+    ctx.rotate(rep * 100 * Math.PI / 180); 
+    ctx.translate(-eyeCoordsProj[0], -eyeCoordsProj[1])
+    const animator = new CentrelineAnimator(ctx, mercProjection);
+    animator.drawBlocksFromNode(13465772);
+    rep += 1;
+    const timeoutSpeed = 30000 - (rep * 300);
+    setTimeout(animateEmanation, timeoutSpeed > 0 ? timeoutSpeed : 100);
+  };
+  animateEmanation();
 
 })();
 
-// function markEmanation(featureCoords) {
-//   const projCoords = mercProjection(featureCoords);
-
-//   ctx.beginPath();
-//   ctx.arc(projCoords[0], projCoords[1], 5, 0, Math.PI * 2);
-//   ctx.fill();
-// } 
+function markEmanation(projCoords, ctx) {
+  ctx.beginPath();
+  ctx.arc(projCoords[0], projCoords[1], 5, 0, Math.PI * 2);
+  ctx.fill();
+} 
 
 // function drawBlocksFromNode(nodeId) {
 //   console.log('draw blocks from node', nodeId);
