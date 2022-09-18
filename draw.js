@@ -10,22 +10,23 @@ const mercProjection = d3.geoMercator();
 const geoGenerator = d3.geoPath()
   .projection(mercProjection)
   .context(ctx);
-mercProjection.translate([mapWidth / 2, mapHeight / 10])
+mercProjection.translate([mapWidth / 2, mapHeight / 2])
 mercProjection.scale(4000000);
 
 let emanationFeature;
+const eyeCoords = [ -79.466850201826219, 43.657227646269199 ];
 (async () => {
   const emanationsGeoJson = await d3.json("data/geojson-by-verse/4/emanations.geojson");
   emanationFeature = emanationsGeoJson.features[0];
-  mercProjection.center(emanationFeature.geometry.coordinates);
-  markEmanation(emanationFeature.geometry.coordinates);
+  mercProjection.center(eyeCoords);
+  markEmanation(eyeCoords);
 })();
 
 let blocksGeoJson;
 const blockDrawnIds = [];
 (async () => {
   blocksGeoJson = await d3.json("data/junction-and-margins-centreline.geojson");
-  drawBlocksFromNode(emanationFeature.properties.nearestNodeId);
+  drawBlocksFromNode(13465772);
 })();
 
 function markEmanation(featureCoords) {
