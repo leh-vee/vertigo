@@ -11,7 +11,7 @@ const geoGenerator = d3.geoPath()
   .projection(mercProjection)
   .context(ctx);
 mercProjection.translate([mapWidth / 2, mapHeight / 2])
-mercProjection.scale(4000000);
+mercProjection.scale(3000000);
 
 let emanationFeature;
 const eyeCoords = [ -79.466850201826219, 43.657227646269199 ];
@@ -22,122 +22,128 @@ const eyeCoords = [ -79.466850201826219, 43.657227646269199 ];
   markEmanation(eyeCoords);
 })();
 
-let blocksGeoJson;
-const blockDrawnIds = [];
 (async () => {
-  blocksGeoJson = await d3.json("data/junction-and-margins-centreline.geojson");
-  drawBlocksFromNode(13465772);
+  CentrelineAnimator.blocksGeoJson = await d3.json("data/junction-and-margins-centreline.geojson");
+  const animator = new CentrelineAnimator(ctx, mercProjection);
+  animator.drawBlocksFromNode(13465772);
+
+  // drawBlocksFromNode(13465772);
+  // setInterval(() => {
+  //   let newScale = mercProjection.scale() + 3000000;
+  //   mercProjection.scale(newScale);
+  //   drawBlocksFromNode(13465772);
+  // }, 10000);
+
 })();
 
-function markEmanation(featureCoords) {
-  const projCoords = mercProjection(featureCoords);
+// function markEmanation(featureCoords) {
+//   const projCoords = mercProjection(featureCoords);
 
-  ctx.beginPath();
-  ctx.arc(projCoords[0], projCoords[1], 5, 0, Math.PI * 2);
-  ctx.fill();
-} 
+//   ctx.beginPath();
+//   ctx.arc(projCoords[0], projCoords[1], 5, 0, Math.PI * 2);
+//   ctx.fill();
+// } 
 
-function drawBlocksFromNode(nodeId) {
-  console.log('draw blocks from node', nodeId);
-  const blocks = getBlocksAtNode(nodeId);
-  blocks.forEach(block => {
-    drawBlock(block, nodeId);
-  });
-}
+// function drawBlocksFromNode(nodeId) {
+//   console.log('draw blocks from node', nodeId);
+//   const blocks = getBlocksAtNode(nodeId);
+//   blocks.forEach(block => {
+//     drawBlock(block, nodeId);
+//   });
+// }
 
-function drawBlock(blockFeature, startNodeId) {
-  const blockProps = blockFeature.properties;
+// function drawBlock(blockFeature, startNodeId) {
+//   const blockProps = blockFeature.properties;
   
-  if (blockDrawnIds.includes(blockProps.id)) return null;
+//   if (blockDrawnIds.includes(blockProps.id)) return null;
 
-  const lineCoordinates = blockFeature.geometry.coordinates;
-  const lineCount = lineCoordinates.length - 1; 
+//   const lineCoordinates = blockFeature.geometry.coordinates;
   
-  let endNodeId = blockProps.to_node_id;
-  const drawBackwards = startNodeId === blockProps.to_node_id;
+//   let endNodeId = blockProps.to_node_id;
+//   const drawBackwards = startNodeId === blockProps.to_node_id;
 
-  if (drawBackwards) {
-    lineCoordinates.reverse();
-    endNodeId = blockProps.from_node_id;
-  }
+//   if (drawBackwards) {
+//     lineCoordinates.reverse();
+//     endNodeId = blockProps.from_node_id;
+//   }
 
-  const blockAnimeProps = {
-    id: blockProps.id,
-    coordinates: lineCoordinates,
-    endNodeId: endNodeId
-  }
+//   const blockAnimeProps = {
+//     id: blockProps.id,
+//     coordinates: lineCoordinates,
+//     endNodeId: endNodeId
+//   }
 
-  animateBlockLine(blockAnimeProps)
+//   animateBlockLine(blockAnimeProps)
 
-  blockDrawnIds.push(blockProps.id);
-}
+//   blockDrawnIds.push(blockProps.id);
+// }
 
-function animateBlockLine(blockAnimeProps, pointIndex = 0) {
-  const lineCoordinates = blockAnimeProps.coordinates;
-  const linesCount = lineCoordinates.length - 1;
-  const isLastLineInBlock = pointIndex === linesCount - 1;
+// function animateBlockLine(blockAnimeProps, pointIndex = 0) {
+//   const lineCoordinates = blockAnimeProps.coordinates;
+//   const linesCount = lineCoordinates.length - 1;
+//   const isLastLineInBlock = pointIndex === linesCount - 1;
 
-  const fromPoint = mercProjection(lineCoordinates[pointIndex]);
-  const toPoint = mercProjection(lineCoordinates[pointIndex + 1]);
+//   const fromPoint = mercProjection(lineCoordinates[pointIndex]);
+//   const toPoint = mercProjection(lineCoordinates[pointIndex + 1]);
 
-  const xDelta = toPoint[0] - fromPoint[0];
-  const yDelta = toPoint[1] - fromPoint[1];
+//   const xDelta = toPoint[0] - fromPoint[0];
+//   const yDelta = toPoint[1] - fromPoint[1];
   
-  const lineLength = Math.sqrt(xDelta ** 2 + yDelta ** 2);
-  const segmentLength = 1.2;
-  const segmentPercentOfLineLength = segmentLength / lineLength;
+//   const lineLength = Math.sqrt(xDelta ** 2 + yDelta ** 2);
+//   const segmentLength = 1.2;
+//   const segmentPercentOfLineLength = segmentLength / lineLength;
 
-  const xSegmentDelta = xDelta * segmentPercentOfLineLength;
-  const ySegmentDelta = yDelta * segmentPercentOfLineLength; 
+//   const xSegmentDelta = xDelta * segmentPercentOfLineLength;
+//   const ySegmentDelta = yDelta * segmentPercentOfLineLength; 
 
-  const totalFrames = Math.ceil(lineLength / segmentLength);
+//   const totalFrames = Math.ceil(lineLength / segmentLength);
 
-  let frameIndex = 0;
+//   let frameIndex = 0;
 
-  const drawSegment = () => {
-    const isFinalFrame = frameIndex === totalFrames - 1;
+//   const drawSegment = () => {
+//     const isFinalFrame = frameIndex === totalFrames - 1;
 
-    const segmentStartPoint = [
-      fromPoint[0] + (xSegmentDelta * frameIndex),
-      fromPoint[1] + (ySegmentDelta * frameIndex)
-    ];
+//     const segmentStartPoint = [
+//       fromPoint[0] + (xSegmentDelta * frameIndex),
+//       fromPoint[1] + (ySegmentDelta * frameIndex)
+//     ];
 
-    let segmentEndPoint;
-    if (isFinalFrame) {
-      segmentEndPoint = toPoint;
-    } else {
-      segmentEndPoint = [
-        segmentStartPoint[0] + xSegmentDelta,
-        segmentStartPoint[1] + ySegmentDelta
-      ]
-    }
+//     let segmentEndPoint;
+//     if (isFinalFrame) {
+//       segmentEndPoint = toPoint;
+//     } else {
+//       segmentEndPoint = [
+//         segmentStartPoint[0] + xSegmentDelta,
+//         segmentStartPoint[1] + ySegmentDelta
+//       ]
+//     }
 
-    ctx.beginPath();
-    ctx.moveTo(...segmentStartPoint);
-    ctx.lineTo(...segmentEndPoint);
-    ctx.stroke();
+//     ctx.beginPath();
+//     ctx.moveTo(...segmentStartPoint);
+//     ctx.lineTo(...segmentEndPoint);
+//     ctx.stroke();
 
-    if (isFinalFrame) {
-      if (isLastLineInBlock) {
-        drawBlocksFromNode(blockAnimeProps.endNodeId);
-      } else {
-        animateBlockLine(blockAnimeProps, pointIndex + 1);
-      }
-      return true;
-    } else {
-      frameIndex = frameIndex + 1;
-    }
+//     if (isFinalFrame) {
+//       if (isLastLineInBlock) {
+//         drawBlocksFromNode(blockAnimeProps.endNodeId);
+//       } else {
+//         animateBlockLine(blockAnimeProps, pointIndex + 1);
+//       }
+//       return true;
+//     } else {
+//       frameIndex = frameIndex + 1;
+//     }
     
-    requestAnimationFrame(drawSegment)
-  }
+//     requestAnimationFrame(drawSegment)
+//   }
 
-  drawSegment();
-}
+//   drawSegment();
+// }
 
-function getBlocksAtNode(nodeId) {
-  const blocks = blocksGeoJson.features.filter(block => {
-    const blockProps = block.properties;
-    return blockProps.from_node_id === nodeId || blockProps.to_node_id === nodeId;
-  })
-  return blocks;
-}
+// function getBlocksAtNode(nodeId) {
+//   const blocks = blocksGeoJson.features.filter(block => {
+//     const blockProps = block.properties;
+//     return blockProps.from_node_id === nodeId || blockProps.to_node_id === nodeId;
+//   })
+//   return blocks;
+// }
