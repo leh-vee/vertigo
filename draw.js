@@ -1,61 +1,63 @@
 const textEl = document.getElementById('syllable');
 const mapWidth = 390, mapHeight = 844;
-const canvas = d3.select(".canvasWrapper").append("canvas")
-    .attr("width", mapWidth)
-    .attr("height", mapHeight);
-
-const ctx = canvas.node().getContext('2d');
-ctx.lineCap = 'square';
-ctx.lineWidth = 6;
-ctx.strokeStyle = 'white';
-ctx.font = '150px serif';
-ctx.textAlign = 'center';
-ctx.textBaseline = 'alphabetic';
-
-const mercProjection = d3.geoMercator();
-const geoGenerator = d3.geoPath()
-  .projection(mercProjection)
-  .context(ctx);
-mercProjection.translate([mapWidth / 2, mapHeight / 10])
-mercProjection.scale(2000000);
-
-let emanationFeature;
-(async () => {
-  const emanationsGeoJson = await d3.json("data/geojson-by-verse/4/emanations.geojson");
-  emanationFeature = emanationsGeoJson.features[0];
-  mercProjection.center(emanationFeature.geometry.coordinates);
-  // markEmanation(emanationFeature.geometry.coordinates);
-})();
-
-let blocksGeoJson;
-const blockDrawnIds = [];
-(async () => {
-  blocksGeoJson = await d3.json("data/junction-and-margins-centreline.geojson");
-  drawBlocksFromNode(emanationFeature.properties.nearestNodeId);
-})();
+// (async () => {
+//   const emanationsGeoJson = await d3.json("data/geojson-by-verse/4/emanations.geojson");
+//   emanationFeature = emanationsGeoJson.features[0];
+//   mercProjection.center(eyeCoords);
+//   markEmanation(eyeCoords);
+// })();
 
 (async () => {
-  const syllablesGeoJson = await d3.json("data/geojson-by-verse/4/syllables.geojson");
-  markSyllables(syllablesGeoJson.features);
-})();
+  CentrelineAnimator.blocksGeoJson = await d3.json("data/junction-and-margins-centreline.geojson");
+  const eyeCoords = [ -79.466850201826219, 43.657227646269199 ]; // 100 High Park Av
+  // const eyeCoords = [ -79.475580356435302, 43.666354317159403 ]; // Shul
+  const mercProjection = d3.geoMercator();
+  let rep = 0;
 
-function markSyllables(features) {
-  const syllableCount = features.length;
-  let nextSyllableIndex = 0;
-  const intervalId = setInterval(() => {
-    if (nextSyllableIndex < syllableCount) {
-      markSyllable(features[nextSyllableIndex].geometry.coordinates);
-      if (nextSyllableIndex > 2) drawSyllable(features[nextSyllableIndex].properties.name);
-      nextSyllableIndex += 1;
+  animateEmanation = () => {
+    const canvas = d3.select(".canvasWrapper").append("canvas")
+      .attr("width", mapWidth)
+      .attr("height", mapHeight);
+
+    const ctx = canvas.node().getContext('2d');
+    ctx.lineWidth = 1;
+    ctx.lineCap = 'round';
+
+    const geoGenerator = d3.geoPath()
+      .projection(mercProjection)
+      .context(ctx);
+    mercProjection.translate([mapWidth / 2, mapHeight / 2])
+    mercProjection.scale(3000000 + (100000 * rep));
+    mercProjection.center(eyeCoords);
+    const eyeCoordsProj = mercProjection(eyeCoords);
+    ctx.translate(...eyeCoordsProj);
+    ctx.rotate(rep * 37 * Math.PI / 180); 
+    ctx.translate(-eyeCoordsProj[0], -eyeCoordsProj[1])
+    const animator = new CentrelineAnimator(ctx, mercProjection);
+    if (rep === 0) {
+      ctx.beginPath();
+      ctx.arc(eyeCoordsProj[0], eyeCoordsProj[1], rep < 20 ? rep+5 : 20, 0, Math.PI * 2);
+      ctx.fill();
+      animator.drawBlocksFromNode(13465772); // 100 High Park 
+      // animator.drawBlocksFromNode(13464314); // Shul
+      rep = 1;
+      setTimeout(animateEmanation, 10000);
     } else {
-      clearInterval(intervalId);
+      animator.drawAllBlocks(geoGenerator)
+      rep += 1;
+      const timeoutSpeed = 1000 - (rep * 75);  
+      if (timeoutSpeed > 100) {
+        setTimeout(animateEmanation, timeoutSpeed);
+      } else if (rep <= 1000) {
+        setTimeout(animateEmanation, 100);
+      }
     }
-  }, 1000);
-}
+  };
+  animateEmanation();
 
-function markSyllable(featureCoords) {
-  const projCoords = mercProjection(featureCoords);
+})();
 
+function markEmanation(projCoords, ctx) {
   ctx.beginPath();
   ctx.arc(projCoords[0], projCoords[1], 2, 0, Math.PI * 2);
   ctx.fillStyle = 'black';
@@ -77,107 +79,106 @@ function markEmanation(featureCoords) {
   ctx.fill();
 } 
 
-function drawBlocksFromNode(nodeId) {
-  // console.log('draw blocks from node', nodeId);
-  const blocks = getBlocksAtNode(nodeId);
-  blocks.forEach(block => {
-    drawBlock(block, nodeId);
-  });
-}
+// function drawBlocksFromNode(nodeId) {
+//   console.log('draw blocks from node', nodeId);
+//   const blocks = getBlocksAtNode(nodeId);
+//   blocks.forEach(block => {
+//     drawBlock(block, nodeId);
+//   });
+// }
 
-function drawBlock(blockFeature, startNodeId) {
-  const blockProps = blockFeature.properties;
+// function drawBlock(blockFeature, startNodeId) {
+//   const blockProps = blockFeature.properties;
   
-  if (blockDrawnIds.includes(blockProps.id)) return null;
+//   if (blockDrawnIds.includes(blockProps.id)) return null;
 
-  const lineCoordinates = blockFeature.geometry.coordinates;
-  const lineCount = lineCoordinates.length - 1; 
+//   const lineCoordinates = blockFeature.geometry.coordinates;
   
-  let endNodeId = blockProps.to_node_id;
-  const drawBackwards = startNodeId === blockProps.to_node_id;
+//   let endNodeId = blockProps.to_node_id;
+//   const drawBackwards = startNodeId === blockProps.to_node_id;
 
-  if (drawBackwards) {
-    lineCoordinates.reverse();
-    endNodeId = blockProps.from_node_id;
-  }
+//   if (drawBackwards) {
+//     lineCoordinates.reverse();
+//     endNodeId = blockProps.from_node_id;
+//   }
 
-  const blockAnimeProps = {
-    id: blockProps.id,
-    coordinates: lineCoordinates,
-    endNodeId: endNodeId
-  }
+//   const blockAnimeProps = {
+//     id: blockProps.id,
+//     coordinates: lineCoordinates,
+//     endNodeId: endNodeId
+//   }
 
-  animateBlockLine(blockAnimeProps)
+//   animateBlockLine(blockAnimeProps)
 
-  blockDrawnIds.push(blockProps.id);
-}
+//   blockDrawnIds.push(blockProps.id);
+// }
 
-function animateBlockLine(blockAnimeProps, pointIndex = 0) {
-  const lineCoordinates = blockAnimeProps.coordinates;
-  const linesCount = lineCoordinates.length - 1;
-  const isLastLineInBlock = pointIndex === linesCount - 1;
+// function animateBlockLine(blockAnimeProps, pointIndex = 0) {
+//   const lineCoordinates = blockAnimeProps.coordinates;
+//   const linesCount = lineCoordinates.length - 1;
+//   const isLastLineInBlock = pointIndex === linesCount - 1;
 
-  const fromPoint = mercProjection(lineCoordinates[pointIndex]);
-  const toPoint = mercProjection(lineCoordinates[pointIndex + 1]);
+//   const fromPoint = mercProjection(lineCoordinates[pointIndex]);
+//   const toPoint = mercProjection(lineCoordinates[pointIndex + 1]);
 
-  const xDelta = toPoint[0] - fromPoint[0];
-  const yDelta = toPoint[1] - fromPoint[1];
+//   const xDelta = toPoint[0] - fromPoint[0];
+//   const yDelta = toPoint[1] - fromPoint[1];
   
-  const lineLength = Math.sqrt(xDelta ** 2 + yDelta ** 2);
-  const segmentLength = 1.25;
-  const segmentPercentOfLineLength = segmentLength / lineLength;
+//   const lineLength = Math.sqrt(xDelta ** 2 + yDelta ** 2);
+//   const segmentLength = 1.2;
+//   const segmentPercentOfLineLength = segmentLength / lineLength;
 
-  const xSegmentDelta = xDelta * segmentPercentOfLineLength;
-  const ySegmentDelta = yDelta * segmentPercentOfLineLength; 
+//   const xSegmentDelta = xDelta * segmentPercentOfLineLength;
+//   const ySegmentDelta = yDelta * segmentPercentOfLineLength; 
 
-  const totalFrames = Math.ceil(lineLength / segmentLength);
+//   const totalFrames = Math.ceil(lineLength / segmentLength);
 
-  let frameIndex = 0;
+//   let frameIndex = 0;
 
-  const drawSegment = () => {
-    const isFinalFrame = frameIndex === totalFrames - 1;
+//   const drawSegment = () => {
+//     const isFinalFrame = frameIndex === totalFrames - 1;
 
-    const segmentStartPoint = [
-      fromPoint[0] + (xSegmentDelta * frameIndex),
-      fromPoint[1] + (ySegmentDelta * frameIndex)
-    ];
+//     const segmentStartPoint = [
+//       fromPoint[0] + (xSegmentDelta * frameIndex),
+//       fromPoint[1] + (ySegmentDelta * frameIndex)
+//     ];
 
-    let segmentEndPoint;
-    if (isFinalFrame) {
-      segmentEndPoint = toPoint;
-    } else {
-      segmentEndPoint = [
-        segmentStartPoint[0] + xSegmentDelta,
-        segmentStartPoint[1] + ySegmentDelta
-      ]
-    }
+//     let segmentEndPoint;
+//     if (isFinalFrame) {
+//       segmentEndPoint = toPoint;
+//     } else {
+//       segmentEndPoint = [
+//         segmentStartPoint[0] + xSegmentDelta,
+//         segmentStartPoint[1] + ySegmentDelta
+//       ]
+//     }
 
-    ctx.beginPath();
-    ctx.moveTo(...segmentStartPoint);
-    ctx.lineTo(...segmentEndPoint);
-    ctx.stroke();
+//     ctx.beginPath();
+//     ctx.moveTo(...segmentStartPoint);
+//     ctx.lineTo(...segmentEndPoint);
+//     ctx.stroke();
 
-    if (isFinalFrame) {
-      if (isLastLineInBlock) {
-        drawBlocksFromNode(blockAnimeProps.endNodeId);
-      } else {
-        animateBlockLine(blockAnimeProps, pointIndex + 1);
-      }
-      return true;
-    } else {
-      frameIndex = frameIndex + 1;
-    }
+//     if (isFinalFrame) {
+//       if (isLastLineInBlock) {
+//         drawBlocksFromNode(blockAnimeProps.endNodeId);
+//       } else {
+//         animateBlockLine(blockAnimeProps, pointIndex + 1);
+//       }
+//       return true;
+//     } else {
+//       frameIndex = frameIndex + 1;
+//     }
     
-    requestAnimationFrame(drawSegment)
-  }
+//     requestAnimationFrame(drawSegment)
+//   }
 
-  drawSegment();
-}
+//   drawSegment();
+// }
 
-function getBlocksAtNode(nodeId) {
-  const blocks = blocksGeoJson.features.filter(block => {
-    const blockProps = block.properties;
-    return blockProps.from_node_id === nodeId || blockProps.to_node_id === nodeId;
-  })
-  return blocks;
-}
+// function getBlocksAtNode(nodeId) {
+//   const blocks = blocksGeoJson.features.filter(block => {
+//     const blockProps = block.properties;
+//     return blockProps.from_node_id === nodeId || blockProps.to_node_id === nodeId;
+//   })
+//   return blocks;
+// }
