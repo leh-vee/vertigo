@@ -18,3 +18,5 @@ against you. Refine your longing here, in the small sil-
 ver music of her preperations, under the low-built shel-
 ter of repentance. 
 </pre>
+
+– Leonard Cohen; (Psalm) 16, Book of Mercy 
